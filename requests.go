@@ -3,7 +3,7 @@ package mytokenlib
 import (
 	"strings"
 
-	api "github.com/oidc-mytoken/server/pkg/api/v0"
+	api "github.com/oidc-mytoken/api/v0"
 )
 
 func NewAccessTokenRequest(issuer, mytoken string, scopes, audiences []string, comment string) api.AccessTokenRequest {
