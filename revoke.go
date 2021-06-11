@@ -11,12 +11,12 @@ func (my *MytokenProvider) Revoke(mytoken, oidcIssuer string, recursive bool) er
 		Recursive:  recursive,
 		OIDCIssuer: oidcIssuer,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetError(&api.APIError{}).Post(my.RevocationEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetError(&api.Error{}).Post(my.RevocationEndpoint)
 	if err != nil {
 		return newMytokenErrorFromError("error while sending http request", err)
 	}
 	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
 			return &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,

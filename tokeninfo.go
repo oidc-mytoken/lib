@@ -10,12 +10,12 @@ func (my *MytokenProvider) TokeninfoIntrospect(mytoken string) (*api.TokeninfoIn
 		Action:  api.TokeninfoActionIntrospect,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoIntrospectResponse{}).SetError(&api.APIError{}).Post(my.TokeninfoEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoIntrospectResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
 	if err != nil {
 		return nil, newMytokenErrorFromError(errorWhileHttp, err)
 	}
 	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
 			return nil, &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,
@@ -35,12 +35,12 @@ func (my *MytokenProvider) TokeninfoHistory(mytoken string) (*api.TokeninfoHisto
 		Action:  api.TokeninfoActionEventHistory,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoHistoryResponse{}).SetError(&api.APIError{}).Post(my.TokeninfoEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoHistoryResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
 	if err != nil {
 		return nil, newMytokenErrorFromError(errorWhileHttp, err)
 	}
 	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
 			return nil, &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,
@@ -60,12 +60,12 @@ func (my *MytokenProvider) TokeninfoSubtokens(mytoken string) (*api.TokeninfoTre
 		Action:  api.TokeninfoActionSubtokenTree,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoTreeResponse{}).SetError(&api.APIError{}).Post(my.TokeninfoEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoTreeResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
 	if err != nil {
 		return nil, newMytokenErrorFromError(errorWhileHttp, err)
 	}
 	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
 			return nil, &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,
@@ -85,12 +85,12 @@ func (my *MytokenProvider) TokeninfoListMytokens(mytoken string) (*api.Tokeninfo
 		Action:  api.TokeninfoActionListMytokens,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoListResponse{}).SetError(&api.APIError{}).Post(my.TokeninfoEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoListResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
 	if err != nil {
 		return nil, newMytokenErrorFromError(errorWhileHttp, err)
 	}
 	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
 			return nil, &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,

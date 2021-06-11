@@ -10,12 +10,12 @@ import (
 )
 
 func (my *MytokenProvider) GetMytoken(req interface{}) (string, error) {
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.MytokenResponse{}).SetError(&api.APIError{}).Post(my.MytokenEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.MytokenResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
 	if err != nil {
 		return "", newMytokenErrorFromError("error while sending http request", err)
 	}
 	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
 			return "", &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,
@@ -88,12 +88,12 @@ func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api
 		},
 		RedirectType: "native",
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.AuthCodeFlowResponse{}).SetError(&api.APIError{}).Post(my.MytokenEndpoint)
+	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.AuthCodeFlowResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
 	if err != nil {
 		return nil, newMytokenErrorFromError("error while sending http request", err)
 	}
 	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.APIError); errRes != nil && errRes.Error != "" {
+		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
 			return nil, &MytokenError{
 				err:          errRes.Error,
 				errorDetails: errRes.ErrorDescription,
@@ -147,7 +147,7 @@ func (my *MytokenProvider) PollOnce(pollingCode string) (string, bool, error) {
 	}
 	var myErr *MytokenError
 	if errors.As(err, &myErr) {
-		if myErr.err == api.ErrorAuthorizationPending {
+		if myErr.err == api.ErrorStrAuthorizationPending {
 			err = nil
 		}
 	}
