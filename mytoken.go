@@ -33,14 +33,16 @@ func (my *MytokenProvider) GetMytoken(req interface{}) (string, error) {
 
 func (my *MytokenProvider) GetMytokenByMytoken(mytoken, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
 	req := api.MytokenFromMytokenRequest{
-		Issuer:               issuer,
-		GrantType:            api.GrantTypeMytoken,
+		GeneralMytokenRequest: api.GeneralMytokenRequest{
+			Issuer:               issuer,
+			GrantType:            api.GrantTypeMytoken,
+			Restrictions:         restrictions,
+			Capabilities:         capabilities,
+			SubtokenCapabilities: subtokenCapabilities,
+			Name:                 name,
+			ResponseType:         responseType,
+		},
 		Mytoken:              mytoken,
-		Restrictions:         restrictions,
-		Capabilities:         capabilities,
-		SubtokenCapabilities: subtokenCapabilities,
-		Name:                 name,
-		ResponseType:         responseType,
 	}
 	return my.GetMytoken(req)
 }
@@ -77,14 +79,16 @@ func (my *MytokenProvider) GetMytokenByAuthorizationFlow(issuer string, restrict
 func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (*api.AuthCodeFlowResponse, error) {
 	req := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
-			Issuer:               issuer,
-			GrantType:            api.GrantTypeOIDCFlow,
+			GeneralMytokenRequest: api.GeneralMytokenRequest{
+				Issuer:               issuer,
+				GrantType:            api.GrantTypeOIDCFlow,
+				Restrictions:         restrictions,
+				Capabilities:         capabilities,
+				SubtokenCapabilities: subtokenCapabilities,
+				Name:                 name,
+				ResponseType:         responseType,
+			},
 			OIDCFlow:             api.OIDCFlowAuthorizationCode,
-			Restrictions:         restrictions,
-			Capabilities:         capabilities,
-			SubtokenCapabilities: subtokenCapabilities,
-			Name:                 name,
-			ResponseType:         responseType,
 		},
 		RedirectType: "native",
 	}
