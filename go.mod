@@ -4,5 +4,5 @@ go 1.13
 
 require (
 	github.com/oidc-mytoken/api v0.3.0
-	github.com/oidc-mytoken/server v0.2.0
+	github.com/oidc-mytoken/server v0.3.0
 )
