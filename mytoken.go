@@ -6,32 +6,17 @@ import (
 	"time"
 
 	"github.com/oidc-mytoken/api/v0"
-	"github.com/oidc-mytoken/server/shared/httpClient"
 )
 
-func (my *MytokenProvider) GetMytoken(req interface{}) (string, error) {
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.MytokenResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
-	if err != nil {
-		return "", newMytokenErrorFromError("error while sending http request", err)
+func (my *MytokenServer) GetMytoken(req interface{}) (string, error) {
+	var resp api.MytokenResponse
+	if err := doHTTPRequest("POST", my.MytokenEndpoint, req, &resp); err != nil {
+		return "", err
 	}
-	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
-			return "", &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	stRes, ok := resp.Result().(*api.MytokenResponse)
-	if !ok {
-		return "", &MytokenError{
-			err: "unexpected response from mytoken server",
-		}
-	}
-	return stRes.Mytoken, nil
+	return resp.Mytoken, nil
 }
 
-func (my *MytokenProvider) GetMytokenByMytoken(mytoken, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
+func (my *MytokenServer) GetMytokenByMytoken(mytoken, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
 	req := api.MytokenFromMytokenRequest{
 		GeneralMytokenRequest: api.GeneralMytokenRequest{
 			Issuer:               issuer,
@@ -42,12 +27,12 @@ func (my *MytokenProvider) GetMytokenByMytoken(mytoken, issuer string, restricti
 			Name:                 name,
 			ResponseType:         responseType,
 		},
-		Mytoken:              mytoken,
+		Mytoken: mytoken,
 	}
 	return my.GetMytoken(req)
 }
 
-func (my *MytokenProvider) GetMytokenByTransferCode(transferCode string) (string, error) {
+func (my *MytokenServer) GetMytokenByTransferCode(transferCode string) (string, error) {
 	req := api.ExchangeTransferCodeRequest{
 		GrantType:    api.GrantTypeTransferCode,
 		TransferCode: transferCode,
@@ -61,7 +46,7 @@ type PollingCallbacks struct {
 	End      func()
 }
 
-func (my *MytokenProvider) GetMytokenByAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string, callbacks PollingCallbacks) (string, error) {
+func (my *MytokenServer) GetMytokenByAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string, callbacks PollingCallbacks) (string, error) {
 	authRes, err := my.InitAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, responseType, name)
 	if err != nil {
 		return "", err
@@ -76,7 +61,7 @@ func (my *MytokenProvider) GetMytokenByAuthorizationFlow(issuer string, restrict
 	return tok, err
 }
 
-func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (*api.AuthCodeFlowResponse, error) {
+func (my *MytokenServer) InitAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (*api.AuthCodeFlowResponse, error) {
 	req := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
 			GeneralMytokenRequest: api.GeneralMytokenRequest{
@@ -88,32 +73,18 @@ func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api
 				Name:                 name,
 				ResponseType:         responseType,
 			},
-			OIDCFlow:             api.OIDCFlowAuthorizationCode,
+			OIDCFlow: api.OIDCFlowAuthorizationCode,
 		},
 		RedirectType: "native",
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.AuthCodeFlowResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
-	if err != nil {
-		return nil, newMytokenErrorFromError("error while sending http request", err)
+	var resp api.AuthCodeFlowResponse
+	if err := doHTTPRequest("POST", my.MytokenEndpoint, req, &resp); err != nil {
+		return nil, err
 	}
-	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	authRes, ok := resp.Result().(*api.AuthCodeFlowResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return authRes, nil
+	return &resp, nil
 }
 
-func (my *MytokenProvider) Poll(res api.PollingInfo, callback func(int64, int)) (string, error) {
+func (my *MytokenServer) Poll(res api.PollingInfo, callback func(int64, int)) (string, error) {
 	expires := time.Now().Add(time.Duration(res.PollingCodeExpiresIn) * time.Second)
 	interval := res.PollingInterval
 	if interval == 0 {
@@ -139,7 +110,7 @@ func (my *MytokenProvider) Poll(res api.PollingInfo, callback func(int64, int)) 
 	return "", fmt.Errorf("polling code expired")
 }
 
-func (my *MytokenProvider) PollOnce(pollingCode string) (string, bool, error) {
+func (my *MytokenServer) PollOnce(pollingCode string) (string, bool, error) {
 	req := api.PollingCodeRequest{
 		GrantType:   api.GrantTypePollingCode,
 		PollingCode: pollingCode,
