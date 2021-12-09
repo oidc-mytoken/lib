@@ -3,9 +3,10 @@ package mytokenlib
 import (
 	"strings"
 
-	api "github.com/oidc-mytoken/api/v0"
+	"github.com/oidc-mytoken/api/v0"
 )
 
+// NewAccessTokenRequest creates a new api.AccessTokenRequest with the passed arguments
 func NewAccessTokenRequest(issuer, mytoken string, scopes, audiences []string, comment string) api.AccessTokenRequest {
 	return api.AccessTokenRequest{
 		Issuer:    issuer,

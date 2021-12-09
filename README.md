@@ -12,7 +12,8 @@
 `mytokenlib` is a go library for communicating with amytoken server.
 `mytoken` is a central web service with the goal to easily obtain OpenID Connect access tokens across devices.
 
-A mytoken command line client can be found at [https://github.com/oidc-mytoken/client](https://github.com/oidc-mytoken/client).
+A mytoken command line client can be found
+at [https://github.com/oidc-mytoken/client](https://github.com/oidc-mytoken/client).
 
 The mytoken server can be found at [https://github.com/oidc-mytoken/server](https://github.com/oidc-mytoken/server).
 

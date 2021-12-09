@@ -4,6 +4,7 @@ import (
 	"github.com/oidc-mytoken/api/v0"
 )
 
+// TokeninfoIntrospect introspects the passed mytoken
 func (my *MytokenServer) TokeninfoIntrospect(mytoken string) (*api.TokeninfoIntrospectResponse, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionIntrospect,
@@ -15,6 +16,9 @@ func (my *MytokenServer) TokeninfoIntrospect(mytoken string) (*api.TokeninfoIntr
 	}
 	return &resp, nil
 }
+
+// TokeninfoHistory obtains the event history for the passed mytoken.
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (my *MytokenServer) TokeninfoHistory(mytoken *string) (api.EventHistory, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionEventHistory,
@@ -29,6 +33,10 @@ func (my *MytokenServer) TokeninfoHistory(mytoken *string) (api.EventHistory, er
 	}
 	return resp.EventHistory, nil
 }
+
+// TokeninfoSubtokens returns a api.MytokenEntryTree listing metadata about the passed mytoken and its children (
+// recursively)
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (my *MytokenServer) TokeninfoSubtokens(mytoken *string) (*api.MytokenEntryTree, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionSubtokenTree,
@@ -43,6 +51,10 @@ func (my *MytokenServer) TokeninfoSubtokens(mytoken *string) (*api.MytokenEntryT
 	}
 	return &resp.Tokens, nil
 }
+
+// TokeninfoListMytokens returns a slice of api.MytokenEntryTree listing metadata about all the user's mytoken and their
+// children (recursively)
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (my *MytokenServer) TokeninfoListMytokens(mytoken *string) ([]api.MytokenEntryTree, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionListMytokens,

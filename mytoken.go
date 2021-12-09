@@ -8,19 +8,26 @@ import (
 	"github.com/oidc-mytoken/api/v0"
 )
 
-func (my *MytokenServer) GetMytoken(req interface{}) (string, *string, error) {
+// GetMytoken sends the passed request marshalled as json to the servers mytoken endpoint to obtain a mytoken and
+// returns the obtained mytoken and if a mytoken was used for authorization and it was rotated the updated mytoken.
+func (my *MytokenServer) GetMytoken(request interface{}) (string, *string, error) {
 	var resp api.MytokenResponse
-	if err := doHTTPRequest("POST", my.MytokenEndpoint, req, &resp); err != nil {
+	if err := doHTTPRequest("POST", my.MytokenEndpoint, request, &resp); err != nil {
 		return "", nil, err
 	}
-	var mtUpdate *string
+	var updatedMT *string
 	if resp.TokenUpdate != nil {
-		mtUpdate = &resp.TokenUpdate.Mytoken
+		updatedMT = &resp.TokenUpdate.Mytoken
 	}
-	return resp.Mytoken, mtUpdate, nil
+	return resp.Mytoken, updatedMT, nil
 }
 
-func (my *MytokenServer) GetMytokenByMytoken(mytoken *string, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
+// GetMytokenByMytoken obtains a sub-mytoken by using an existing mytoken according to the passed parameters.
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (my *MytokenServer) GetMytokenByMytoken(
+	mytoken *string, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	responseType, name string,
+) (string, error) {
 	req := api.MytokenFromMytokenRequest{
 		GeneralMytokenRequest: api.GeneralMytokenRequest{
 			Issuer:               issuer,
@@ -40,6 +47,7 @@ func (my *MytokenServer) GetMytokenByMytoken(mytoken *string, issuer string, res
 	return mt, err
 }
 
+// GetMytokenByTransferCode exchanges the transferCode into the linked mytoken
 func (my *MytokenServer) GetMytokenByTransferCode(transferCode string) (string, error) {
 	req := api.ExchangeTransferCodeRequest{
 		GrantType:    api.GrantTypeTransferCode,
@@ -49,14 +57,30 @@ func (my *MytokenServer) GetMytokenByTransferCode(transferCode string) (string, 
 	return mt, err
 }
 
+// PollingCallbacks is a struct holding callback related to the polling in the authorization code flow.
+// The Init function takes the authorization url and is called before the starting polling the server; this callback
+// usually displays information to the user how to proceed, including the passed authorization url
+// The Callback function takes the polling interval and the number of iteration as parameters; it is called for each
+// polling attempt where the final mytoken could not yet be obtained (but no error occurred); it is usually used to
+// print progress output.
+// The End function is called after the mytoken was successfully obtained and might be used to finish output printed
+// to the user.
 type PollingCallbacks struct {
 	Init     func(string) error
 	Callback func(int64, int)
 	End      func()
 }
 
-func (my *MytokenServer) GetMytokenByAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string, callbacks PollingCallbacks) (string, error) {
-	authRes, err := my.InitAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, responseType, name)
+// GetMytokenByAuthorizationFlow is a rather high level function that obtains a new mytoken using the authorization
+// code flow. This function starts the flow with the passed parameters and performs the polling for the mytoken.
+// The passed PollingCallbacks are called throughout the flow.
+func (my *MytokenServer) GetMytokenByAuthorizationFlow(
+	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	responseType, name string, callbacks PollingCallbacks,
+) (string, error) {
+	authRes, err := my.InitAuthorizationFlow(
+		issuer, restrictions, capabilities, subtokenCapabilities, responseType, name,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -70,7 +94,12 @@ func (my *MytokenServer) GetMytokenByAuthorizationFlow(issuer string, restrictio
 	return tok, err
 }
 
-func (my *MytokenServer) InitAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (*api.AuthCodeFlowResponse, error) {
+// InitAuthorizationFlow starts the authorization code flow to obtain a mytoken with the passed parameters; it
+// returns the api.AuthCodeFlowResponse
+func (my *MytokenServer) InitAuthorizationFlow(
+	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	responseType, name string,
+) (*api.AuthCodeFlowResponse, error) {
 	req := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
 			GeneralMytokenRequest: api.GeneralMytokenRequest{
@@ -93,6 +122,12 @@ func (my *MytokenServer) InitAuthorizationFlow(issuer string, restrictions api.R
 	return &resp, nil
 }
 
+// Poll performs the polling for the final mytoken in the authorization code flow using the passed api.
+// PollingInfo.
+// The callback function takes the polling interval and the number of iteration as parameters; it is called for each
+// polling attempt where the final mytoken could not yet be obtained (but no error occurred); it is usually used to
+// print progress output.
+// At the end the mytoken is returned.
 func (my *MytokenServer) Poll(res api.PollingInfo, callback func(int64, int)) (string, error) {
 	expires := time.Now().Add(time.Duration(res.PollingCodeExpiresIn) * time.Second)
 	interval := res.PollingInterval
@@ -119,6 +154,8 @@ func (my *MytokenServer) Poll(res api.PollingInfo, callback func(int64, int)) (s
 	return "", fmt.Errorf("polling code expired")
 }
 
+// PollOnce sends a single polling request with the passed pollingCode; it returns the mytoken if obtained,
+// a bool indicating if the mytoken was obtained, or an error if an error occurred.
 func (my *MytokenServer) PollOnce(pollingCode string) (string, bool, error) {
 	req := api.PollingCodeRequest{
 		GrantType:   api.GrantTypePollingCode,

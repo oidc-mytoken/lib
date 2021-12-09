@@ -6,6 +6,7 @@ type MytokenError struct {
 	errorDetails string
 }
 
+// Error implements the error interface and returns a string representation of this MytokenError
 func (err *MytokenError) Error() string {
 	e := err.err
 	if err.errorDetails != "" {
@@ -20,6 +21,3 @@ func newMytokenErrorFromError(e string, err error) *MytokenError {
 		errorDetails: err.Error(),
 	}
 }
-
-const unexpectedResponse = "unexpected response from mytoken server"
-const errorWhileHttp = "error while sending http request"
