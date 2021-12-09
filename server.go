@@ -9,7 +9,16 @@ import (
 
 // MytokenServer is a type describing a mytoken server instance
 type MytokenServer struct {
-	api.MytokenConfiguration
+	ServerMetadata api.MytokenConfiguration
+	AccessToken    *AccessTokenEndpoint
+	Mytoken        *MytokenEndpoint
+	Revocation     *RevocationEndpoint
+	Tokeninfo      *TokeninfoEndpoint
+}
+
+// Endpoint is an interface for mytoken endpoints
+type Endpoint interface {
+	DoHTTPRequest(method string, req interface{}, resp interface{}) error
 }
 
 var httpClient = &http.Client{}
@@ -27,7 +36,11 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 		return nil, err
 	}
 	return &MytokenServer{
-		MytokenConfiguration: respData,
+		ServerMetadata: respData,
+		AccessToken:    newAccessTokenEndpoint(respData.AccessTokenEndpoint),
+		Mytoken:        newMytokenEndpoint(respData.MytokenEndpoint),
+		Revocation:     newRevocationEndpoint(respData.RevocationEndpoint),
+		Tokeninfo:      newTokeninfoEndpoint(respData.TokeninfoEndpoint),
 	}, nil
 }
 
