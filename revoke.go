@@ -4,7 +4,7 @@ import (
 	"github.com/oidc-mytoken/api/v0"
 )
 
-func (my *MytokenServer) Revoke(mytoken, oidcIssuer string, recursive bool) error {
+func (my *MytokenServer) Revoke(mytoken string, oidcIssuer string, recursive bool) error {
 	req := api.RevocationRequest{
 		Token:      mytoken,
 		Recursive:  recursive,

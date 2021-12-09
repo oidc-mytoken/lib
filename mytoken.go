@@ -8,15 +8,19 @@ import (
 	"github.com/oidc-mytoken/api/v0"
 )
 
-func (my *MytokenServer) GetMytoken(req interface{}) (string, error) {
+func (my *MytokenServer) GetMytoken(req interface{}) (string, *string, error) {
 	var resp api.MytokenResponse
 	if err := doHTTPRequest("POST", my.MytokenEndpoint, req, &resp); err != nil {
-		return "", err
+		return "", nil, err
 	}
-	return resp.Mytoken, nil
+	var mtUpdate *string
+	if resp.TokenUpdate != nil {
+		mtUpdate = &resp.TokenUpdate.Mytoken
+	}
+	return resp.Mytoken, mtUpdate, nil
 }
 
-func (my *MytokenServer) GetMytokenByMytoken(mytoken, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
+func (my *MytokenServer) GetMytokenByMytoken(mytoken *string, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
 	req := api.MytokenFromMytokenRequest{
 		GeneralMytokenRequest: api.GeneralMytokenRequest{
 			Issuer:               issuer,
@@ -27,9 +31,13 @@ func (my *MytokenServer) GetMytokenByMytoken(mytoken, issuer string, restriction
 			Name:                 name,
 			ResponseType:         responseType,
 		},
-		Mytoken: mytoken,
+		Mytoken: *mytoken,
 	}
-	return my.GetMytoken(req)
+	mt, mtUpdate, err := my.GetMytoken(req)
+	if mtUpdate != nil {
+		*mytoken = *mtUpdate
+	}
+	return mt, err
 }
 
 func (my *MytokenServer) GetMytokenByTransferCode(transferCode string) (string, error) {
@@ -37,7 +45,8 @@ func (my *MytokenServer) GetMytokenByTransferCode(transferCode string) (string, 
 		GrantType:    api.GrantTypeTransferCode,
 		TransferCode: transferCode,
 	}
-	return my.GetMytoken(req)
+	mt, _, err := my.GetMytoken(req)
+	return mt, err
 }
 
 type PollingCallbacks struct {
@@ -116,7 +125,7 @@ func (my *MytokenServer) PollOnce(pollingCode string) (string, bool, error) {
 		PollingCode: pollingCode,
 	}
 
-	tok, err := my.GetMytoken(req)
+	tok, _, err := my.GetMytoken(req)
 	if err == nil {
 		return tok, true, nil
 	}

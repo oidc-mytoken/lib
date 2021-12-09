@@ -15,36 +15,45 @@ func (my *MytokenServer) TokeninfoIntrospect(mytoken string) (*api.TokeninfoIntr
 	}
 	return &resp, nil
 }
-func (my *MytokenServer) TokeninfoHistory(mytoken string) (*api.TokeninfoHistoryResponse, error) {
+func (my *MytokenServer) TokeninfoHistory(mytoken *string) (api.EventHistory, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionEventHistory,
-		Mytoken: mytoken,
+		Mytoken: *mytoken,
 	}
 	var resp api.TokeninfoHistoryResponse
 	if err := doHTTPRequest("POST", my.TokeninfoEndpoint, req, &resp); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return resp.EventHistory, nil
 }
-func (my *MytokenServer) TokeninfoSubtokens(mytoken string) (*api.TokeninfoTreeResponse, error) {
+func (my *MytokenServer) TokeninfoSubtokens(mytoken *string) (*api.MytokenEntryTree, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionSubtokenTree,
-		Mytoken: mytoken,
+		Mytoken: *mytoken,
 	}
 	var resp api.TokeninfoTreeResponse
 	if err := doHTTPRequest("POST", my.TokeninfoEndpoint, req, &resp); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return &resp.Tokens, nil
 }
-func (my *MytokenServer) TokeninfoListMytokens(mytoken string) (*api.TokeninfoListResponse, error) {
+func (my *MytokenServer) TokeninfoListMytokens(mytoken *string) ([]api.MytokenEntryTree, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionListMytokens,
-		Mytoken: mytoken,
+		Mytoken: *mytoken,
 	}
 	var resp api.TokeninfoListResponse
 	if err := doHTTPRequest("POST", my.TokeninfoEndpoint, req, &resp); err != nil {
 		return nil, err
 	}
-	return &resp, nil
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return resp.Tokens, nil
 }
