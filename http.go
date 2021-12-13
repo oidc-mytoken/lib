@@ -17,7 +17,12 @@ const (
 
 const mimetypeJSON = "application/json"
 
-func doHTTPRequest(method, url string, reqBody interface{}, responseData interface{}) *MytokenError {
+func doHTTPRequest(method, url string, reqBody interface{}, responseData interface{}) error {
+	return doHTTPRequestWithAuth(method, url, reqBody, responseData, "")
+}
+
+func doHTTPRequestWithAuth(method, url string, reqBody interface{}, responseData interface{},
+	bearerAuth string) error {
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(reqBody); err != nil {
 		return newMytokenErrorFromError(errEncodingRequest, err)
@@ -32,6 +37,9 @@ func doHTTPRequest(method, url string, reqBody interface{}, responseData interfa
 	if responseData != nil {
 		req.Header.Set("Accept", mimetypeJSON)
 	}
+	if bearerAuth != "" {
+		req.Header.Set("Authorization", "Bearer "+bearerAuth)
+	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
 		return newMytokenErrorFromError(errSendingHttpRequest, err)
@@ -42,7 +50,7 @@ func doHTTPRequest(method, url string, reqBody interface{}, responseData interfa
 		if err = json.NewDecoder(resp.Body).Decode(&apiError); err != nil {
 			return newMytokenErrorFromError(errDecodingErrorResponse, err)
 		}
-		return &MytokenError{
+		return MytokenError{
 			err:          apiError.Error,
 			errorDetails: apiError.ErrorDescription,
 		}
