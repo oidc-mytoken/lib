@@ -14,6 +14,8 @@ type MytokenServer struct {
 	Mytoken        *MytokenEndpoint
 	Revocation     *RevocationEndpoint
 	Tokeninfo      *TokeninfoEndpoint
+	Transfer       *TransferEndpoint
+	UserSettings   *UserSettingsEndpoint
 }
 
 // Endpoint is an interface for mytoken endpoints
@@ -35,13 +37,17 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 	if err := doHTTPRequest("GET", configEndpoint, nil, &respData); err != nil {
 		return nil, err
 	}
-	return &MytokenServer{
+	server := &MytokenServer{
 		ServerMetadata: respData,
 		AccessToken:    newAccessTokenEndpoint(respData.AccessTokenEndpoint),
 		Mytoken:        newMytokenEndpoint(respData.MytokenEndpoint),
 		Revocation:     newRevocationEndpoint(respData.RevocationEndpoint),
 		Tokeninfo:      newTokeninfoEndpoint(respData.TokeninfoEndpoint),
-	}, nil
+		Transfer:       newTransferEndpoint(respData.TokenTransferEndpoint),
+	}
+	var err error
+	server.UserSettings, err = newUserSettingsEndpoint(respData.UserSettingsEndpoint)
+	return server, err
 }
 
 // SetClient sets the http.Client used to make API requests
