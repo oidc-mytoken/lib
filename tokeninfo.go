@@ -34,15 +34,22 @@ func (info TokeninfoEndpoint) Introspect(mytoken string) (*api.TokeninfoIntrospe
 	return &resp, nil
 }
 
+// APIHistory obtains the event history for the passed mytoken.
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoHistoryResponse
+func (info TokeninfoEndpoint) APIHistory(mytoken string) (resp api.TokeninfoHistoryResponse, err error) {
+	req := api.TokenInfoRequest{
+		Action:  api.TokeninfoActionEventHistory,
+		Mytoken: mytoken,
+	}
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
+}
+
 // History obtains the event history for the passed mytoken.
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error) {
-	req := api.TokenInfoRequest{
-		Action:  api.TokeninfoActionEventHistory,
-		Mytoken: *mytoken,
-	}
-	var resp api.TokeninfoHistoryResponse
-	if err := info.DoHTTPRequest("POST", req, &resp); err != nil {
+	resp, err := info.APIHistory(*mytoken)
+	if err != nil {
 		return nil, err
 	}
 	if resp.TokenUpdate != nil {
@@ -51,16 +58,24 @@ func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error)
 	return resp.EventHistory, nil
 }
 
+// APISubtokens returns a api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
+// recursively)
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoTreeResponse
+func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoTreeResponse, err error) {
+	req := api.TokenInfoRequest{
+		Action:  api.TokeninfoActionSubtokenTree,
+		Mytoken: mytoken,
+	}
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
+}
+
 // Subtokens returns a api.MytokenEntryTree listing metadata about the passed mytoken and its children (
 // recursively)
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (info TokeninfoEndpoint) Subtokens(mytoken *string) (*api.MytokenEntryTree, error) {
-	req := api.TokenInfoRequest{
-		Action:  api.TokeninfoActionSubtokenTree,
-		Mytoken: *mytoken,
-	}
-	var resp api.TokeninfoTreeResponse
-	if err := info.DoHTTPRequest("POST", req, &resp); err != nil {
+	resp, err := info.APISubtokens(*mytoken)
+	if err != nil {
 		return nil, err
 	}
 	if resp.TokenUpdate != nil {
@@ -69,16 +84,24 @@ func (info TokeninfoEndpoint) Subtokens(mytoken *string) (*api.MytokenEntryTree,
 	return &resp.Tokens, nil
 }
 
+// APIListMytokens returns a api.TokeninfoListResponse listing metadata about all the user's mytoken and their
+// children (recursively)
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoListResponse
+func (info TokeninfoEndpoint) APIListMytokens(mytoken string) (resp api.TokeninfoListResponse, err error) {
+	req := api.TokenInfoRequest{
+		Action:  api.TokeninfoActionListMytokens,
+		Mytoken: mytoken,
+	}
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
+}
+
 // ListMytokens returns a slice of api.MytokenEntryTree listing metadata about all the user's mytoken and their
 // children (recursively)
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (info TokeninfoEndpoint) ListMytokens(mytoken *string) ([]api.MytokenEntryTree, error) {
-	req := api.TokenInfoRequest{
-		Action:  api.TokeninfoActionListMytokens,
-		Mytoken: *mytoken,
-	}
-	var resp api.TokeninfoListResponse
-	if err := info.DoHTTPRequest("POST", req, &resp); err != nil {
+	resp, err := info.APIListMytokens(*mytoken)
+	if err != nil {
 		return nil, err
 	}
 	if resp.TokenUpdate != nil {
