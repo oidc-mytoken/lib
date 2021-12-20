@@ -45,7 +45,8 @@ func (my MytokenEndpoint) FromRequest(request interface{}) (string, *string, err
 // APIFromMytoken obtains a sub-mytoken by using an existing mytoken according to the passed parameters.
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.MytokenResponse
 func (my MytokenEndpoint) APIFromMytoken(
-	mytoken string, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	mytoken string, issuer string, restrictions api.Restrictions, capabilities,
+	subtokenCapabilities api.Capabilities, rotation *api.Rotation,
 	responseType, name string,
 ) (api.MytokenResponse, error) {
 	req := api.MytokenFromMytokenRequest{
@@ -55,6 +56,7 @@ func (my MytokenEndpoint) APIFromMytoken(
 			Restrictions:         restrictions,
 			Capabilities:         capabilities,
 			SubtokenCapabilities: subtokenCapabilities,
+			Rotation:             rotation,
 			Name:                 name,
 			ResponseType:         responseType,
 		},
@@ -66,10 +68,11 @@ func (my MytokenEndpoint) APIFromMytoken(
 // FromMytoken obtains a sub-mytoken by using an existing mytoken according to the passed parameters.
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (my MytokenEndpoint) FromMytoken(
-	mytoken *string, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
-	responseType, name string,
+	mytoken *string, issuer string, restrictions api.Restrictions, capabilities,
+	subtokenCapabilities api.Capabilities, rotation *api.Rotation, responseType, name string,
 ) (string, error) {
-	resp, err := my.APIFromMytoken(*mytoken, issuer, restrictions, capabilities, subtokenCapabilities, responseType, name)
+	resp, err := my.APIFromMytoken(*mytoken, issuer, restrictions, capabilities, subtokenCapabilities,
+		rotation, responseType, name)
 	if err != nil {
 		return "", err
 	}
@@ -99,10 +102,10 @@ func (my MytokenEndpoint) FromTransferCode(transferCode string) (string, error) 
 // The passed PollingCallbacks are called throughout the flow.
 func (my MytokenEndpoint) APIFromAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
-	responseType, name string, callbacks PollingCallbacks,
+	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
 ) (api.MytokenResponse, error) {
 	authRes, err := my.APIInitAuthorizationFlow(
-		issuer, restrictions, capabilities, subtokenCapabilities, responseType, name,
+		issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name,
 	)
 	if err != nil {
 		return api.MytokenResponse{}, err
@@ -123,9 +126,9 @@ func (my MytokenEndpoint) APIFromAuthorizationFlow(
 // The passed PollingCallbacks are called throughout the flow.
 func (my MytokenEndpoint) FromAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
-	responseType, name string, callbacks PollingCallbacks,
+	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
 ) (string, error) {
-	resp, err := my.APIFromAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, responseType, name, callbacks)
+	resp, err := my.APIFromAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name, callbacks)
 	return resp.Mytoken, err
 }
 
@@ -133,7 +136,7 @@ func (my MytokenEndpoint) FromAuthorizationFlow(
 // returns the api.AuthCodeFlowResponse
 func (my MytokenEndpoint) APIInitAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
-	responseType, name string,
+	rotation *api.Rotation, responseType, name string,
 ) (resp api.AuthCodeFlowResponse, err error) {
 	req := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
@@ -143,6 +146,7 @@ func (my MytokenEndpoint) APIInitAuthorizationFlow(
 				Restrictions:         restrictions,
 				Capabilities:         capabilities,
 				SubtokenCapabilities: subtokenCapabilities,
+				Rotation:             rotation,
 				Name:                 name,
 				ResponseType:         responseType,
 			},
