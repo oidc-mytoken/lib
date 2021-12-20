@@ -47,6 +47,9 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 	}
 	var err error
 	server.UserSettings, err = newUserSettingsEndpoint(respData.UserSettingsEndpoint)
+	if err != nil && err.Error() == "not_found" {
+		err = nil
+	}
 	return server, err
 }
 
