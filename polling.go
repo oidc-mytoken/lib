@@ -33,7 +33,7 @@ func pollOnce(pollingCode string, endpoint Endpoint, resp interface{}) (bool, er
 	if err == nil {
 		return true, nil
 	}
-	var myErr *MytokenError
+	var myErr MytokenError
 	if errors.As(err, &myErr) && myErr.err == api.ErrorStrAuthorizationPending {
 		err = nil
 	}
