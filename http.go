@@ -55,7 +55,7 @@ func doHTTPRequestWithAuth(method, url string, reqBody interface{}, responseData
 			errorDetails: apiError.ErrorDescription,
 		}
 	}
-	if responseData != nil {
+	if responseData != nil && resp.ContentLength != 0 {
 		if err = json.NewDecoder(resp.Body).Decode(responseData); err != nil {
 			return newMytokenErrorFromError(errDecodingHttpResponse, err)
 		}
