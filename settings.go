@@ -25,7 +25,7 @@ func newUserSettingsEndpoint(endpoint string) (*UserSettingsEndpoint, error) {
 }
 
 // DoHTTPRequest performs an http request to the user settings endpoint
-func (s UserSettingsEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (s UserSettingsEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, s.endpoint, req, resp)
 }
 

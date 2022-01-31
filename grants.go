@@ -19,12 +19,12 @@ func newGrantsEndpoint(endpoint string) *GrantsEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the grants endpoint
-func (g GrantsEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (g GrantsEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, g.endpoint, req, resp)
 }
 
 // DoHTTPRequestWithAuth performs an http request to the grants endpoint
-func (g GrantsEndpoint) DoHTTPRequestWithAuth(method string, req interface{}, resp interface{}, mytoken string) error {
+func (g GrantsEndpoint) DoHTTPRequestWithAuth(method string, req, resp interface{}, mytoken string) error {
 	return doHTTPRequestWithAuth(method, g.endpoint, req, resp, mytoken)
 }
 

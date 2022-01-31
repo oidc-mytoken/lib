@@ -17,7 +17,7 @@ const (
 
 const mimetypeJSON = "application/json"
 
-func doHTTPRequest(method, url string, reqBody interface{}, responseData interface{}) error {
+func doHTTPRequest(method, url string, reqBody, responseData interface{}) error {
 	return doHTTPRequestWithAuth(method, url, reqBody, responseData, "")
 }
 

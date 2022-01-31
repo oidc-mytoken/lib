@@ -17,7 +17,7 @@ func newMytokenEndpoint(endpoint string) *MytokenEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the mytoken endpoint
-func (my MytokenEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (my MytokenEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, my.endpoint, req, resp)
 }
 

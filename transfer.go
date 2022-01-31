@@ -17,7 +17,7 @@ func newTransferEndpoint(endpoint string) *TransferEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the token transfer endpoint
-func (t TransferEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (t TransferEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, t.endpoint, req, resp)
 }
 

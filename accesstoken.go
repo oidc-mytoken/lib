@@ -17,7 +17,7 @@ func newAccessTokenEndpoint(endpoint string) *AccessTokenEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the access token endpoint
-func (at AccessTokenEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (at AccessTokenEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, at.endpoint, req, resp)
 }
 

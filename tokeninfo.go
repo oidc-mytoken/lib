@@ -17,7 +17,7 @@ func newTokeninfoEndpoint(endpoint string) *TokeninfoEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the tokeninfo endpoint
-func (info TokeninfoEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (info TokeninfoEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, info.endpoint, req, resp)
 }
 

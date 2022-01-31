@@ -22,7 +22,7 @@ func newSSHGrantEndpoint(grantsEndpoint string) *SSHGrantEndpoint {
 }
 
 // DoHTTPRequest performs an http request to the ssh grant endpoint
-func (s SSHGrantEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (s SSHGrantEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return s.DoHTTPRequestWithAuth(method, req, resp, "")
 }
 

@@ -11,7 +11,7 @@ type RevocationEndpoint struct {
 }
 
 // DoHTTPRequest performs an http request to the revocation endpoint
-func (r RevocationEndpoint) DoHTTPRequest(method string, req interface{}, resp interface{}) error {
+func (r RevocationEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
 	return doHTTPRequest(method, r.endpoint, req, resp)
 }
 
@@ -22,7 +22,7 @@ func newRevocationEndpoint(endpoint string) *RevocationEndpoint {
 }
 
 // Revoke revokes the passed mytoken; if recursive is true also all subtokens (and their subtokens...) are revoked.
-func (r RevocationEndpoint) Revoke(mytoken string, oidcIssuer string, recursive bool) error {
+func (r RevocationEndpoint) Revoke(mytoken, oidcIssuer string, recursive bool) error {
 	req := api.RevocationRequest{
 		Token:      mytoken,
 		Recursive:  recursive,
