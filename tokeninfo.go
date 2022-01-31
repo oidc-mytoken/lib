@@ -2,106 +2,110 @@ package mytokenlib
 
 import (
 	"github.com/oidc-mytoken/api/v0"
-	"github.com/oidc-mytoken/server/shared/httpClient"
 )
 
-func (my *MytokenProvider) TokeninfoIntrospect(mytoken string) (*api.TokeninfoIntrospectResponse, error) {
+// TokeninfoEndpoint is type representing a mytoken server's Revocation Endpoint and the actions that can be
+// performed there.
+type TokeninfoEndpoint struct {
+	endpoint string
+}
+
+func newTokeninfoEndpoint(endpoint string) *TokeninfoEndpoint {
+	return &TokeninfoEndpoint{
+		endpoint: endpoint,
+	}
+}
+
+// DoHTTPRequest performs an http request to the tokeninfo endpoint
+func (info TokeninfoEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
+	return doHTTPRequest(method, info.endpoint, req, resp)
+}
+
+// Introspect introspects the passed mytoken
+func (info TokeninfoEndpoint) Introspect(mytoken string) (*api.TokeninfoIntrospectResponse, error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionIntrospect,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoIntrospectResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
-	if err != nil {
-		return nil, newMytokenErrorFromError(errorWhileHttp, err)
+	var resp api.TokeninfoIntrospectResponse
+	if err := info.DoHTTPRequest("POST", req, &resp); err != nil {
+		return nil, err
 	}
-	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	res, ok := resp.Result().(*api.TokeninfoIntrospectResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return res, nil
+	return &resp, nil
 }
-func (my *MytokenProvider) TokeninfoHistory(mytoken string) (*api.TokeninfoHistoryResponse, error) {
+
+// APIHistory obtains the event history for the passed mytoken.
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoHistoryResponse
+func (info TokeninfoEndpoint) APIHistory(mytoken string) (resp api.TokeninfoHistoryResponse, err error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionEventHistory,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoHistoryResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
-	if err != nil {
-		return nil, newMytokenErrorFromError(errorWhileHttp, err)
-	}
-	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	res, ok := resp.Result().(*api.TokeninfoHistoryResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return res, nil
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
 }
-func (my *MytokenProvider) TokeninfoSubtokens(mytoken string) (*api.TokeninfoTreeResponse, error) {
+
+// History obtains the event history for the passed mytoken.
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error) {
+	resp, err := info.APIHistory(*mytoken)
+	if err != nil {
+		return nil, err
+	}
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return resp.EventHistory, nil
+}
+
+// APISubtokens returns a api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
+// recursively)
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoTreeResponse
+func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoTreeResponse, err error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionSubtokenTree,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoTreeResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
-	if err != nil {
-		return nil, newMytokenErrorFromError(errorWhileHttp, err)
-	}
-	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	res, ok := resp.Result().(*api.TokeninfoTreeResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return res, nil
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
 }
-func (my *MytokenProvider) TokeninfoListMytokens(mytoken string) (*api.TokeninfoListResponse, error) {
+
+// Subtokens returns a api.MytokenEntryTree listing metadata about the passed mytoken and its children (
+// recursively)
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (info TokeninfoEndpoint) Subtokens(mytoken *string) (*api.MytokenEntryTree, error) {
+	resp, err := info.APISubtokens(*mytoken)
+	if err != nil {
+		return nil, err
+	}
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return &resp.Tokens, nil
+}
+
+// APIListMytokens returns a api.TokeninfoListResponse listing metadata about all the user's mytoken and their
+// children (recursively)
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoListResponse
+func (info TokeninfoEndpoint) APIListMytokens(mytoken string) (resp api.TokeninfoListResponse, err error) {
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionListMytokens,
 		Mytoken: mytoken,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.TokeninfoListResponse{}).SetError(&api.Error{}).Post(my.TokeninfoEndpoint)
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
+}
+
+// ListMytokens returns a slice of api.MytokenEntryTree listing metadata about all the user's mytoken and their
+// children (recursively)
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (info TokeninfoEndpoint) ListMytokens(mytoken *string) ([]api.MytokenEntryTree, error) {
+	resp, err := info.APIListMytokens(*mytoken)
 	if err != nil {
-		return nil, newMytokenErrorFromError(errorWhileHttp, err)
+		return nil, err
 	}
-	if eRes := resp.Error(); eRes != nil {
-		if errRes := eRes.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
 	}
-	res, ok := resp.Result().(*api.TokeninfoListResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return res, nil
+	return resp.Tokens, nil
 }

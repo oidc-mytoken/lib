@@ -1,37 +1,54 @@
 package mytokenlib
 
 import (
-	"errors"
-	"fmt"
-	"time"
-
 	"github.com/oidc-mytoken/api/v0"
-	"github.com/oidc-mytoken/server/shared/httpClient"
 )
 
-func (my *MytokenProvider) GetMytoken(req interface{}) (string, error) {
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.MytokenResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
-	if err != nil {
-		return "", newMytokenErrorFromError("error while sending http request", err)
-	}
-	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
-			return "", &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	stRes, ok := resp.Result().(*api.MytokenResponse)
-	if !ok {
-		return "", &MytokenError{
-			err: "unexpected response from mytoken server",
-		}
-	}
-	return stRes.Mytoken, nil
+// MytokenEndpoint is type representing a mytoken server's Mytoken Endpoint and the actions that can be
+// performed there.
+type MytokenEndpoint struct {
+	endpoint string
 }
 
-func (my *MytokenProvider) GetMytokenByMytoken(mytoken, issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (string, error) {
+func newMytokenEndpoint(endpoint string) *MytokenEndpoint {
+	return &MytokenEndpoint{
+		endpoint: endpoint,
+	}
+}
+
+// DoHTTPRequest performs an http request to the mytoken endpoint
+func (my MytokenEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
+	return doHTTPRequest(method, my.endpoint, req, resp)
+}
+
+// APIFromRequest sends the passed request marshalled as json to the servers mytoken endpoint to obtain a mytoken and
+// returns the api.MytokenResponse.
+func (my MytokenEndpoint) APIFromRequest(request interface{}) (resp api.MytokenResponse, err error) {
+	err = my.DoHTTPRequest("POST", request, &resp)
+	return
+}
+
+// FromRequest sends the passed request marshalled as json to the servers mytoken endpoint to obtain a mytoken and
+// returns the obtained mytoken and if a mytoken was used for authorization and it was rotated the updated mytoken.
+func (my MytokenEndpoint) FromRequest(request interface{}) (string, *string, error) {
+	resp, err := my.APIFromRequest(request)
+	if err != nil {
+		return "", nil, err
+	}
+	var updatedMT *string
+	if resp.TokenUpdate != nil {
+		updatedMT = &resp.TokenUpdate.Mytoken
+	}
+	return resp.Mytoken, updatedMT, nil
+}
+
+// APIFromMytoken obtains a sub-mytoken by using an existing mytoken according to the passed parameters.
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the api.MytokenResponse
+func (my MytokenEndpoint) APIFromMytoken(
+	mytoken string, issuer string, restrictions api.Restrictions, capabilities,
+	subtokenCapabilities api.Capabilities, rotation *api.Rotation,
+	responseType, name string,
+) (api.MytokenResponse, error) {
 	req := api.MytokenFromMytokenRequest{
 		GeneralMytokenRequest: api.GeneralMytokenRequest{
 			Issuer:               issuer,
@@ -39,44 +56,92 @@ func (my *MytokenProvider) GetMytokenByMytoken(mytoken, issuer string, restricti
 			Restrictions:         restrictions,
 			Capabilities:         capabilities,
 			SubtokenCapabilities: subtokenCapabilities,
+			Rotation:             rotation,
 			Name:                 name,
 			ResponseType:         responseType,
 		},
-		Mytoken:              mytoken,
+		Mytoken: mytoken,
 	}
-	return my.GetMytoken(req)
+	return my.APIFromRequest(req)
 }
 
-func (my *MytokenProvider) GetMytokenByTransferCode(transferCode string) (string, error) {
+// FromMytoken obtains a sub-mytoken by using an existing mytoken according to the passed parameters.
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (my MytokenEndpoint) FromMytoken(
+	mytoken *string, issuer string, restrictions api.Restrictions, capabilities,
+	subtokenCapabilities api.Capabilities, rotation *api.Rotation, responseType, name string,
+) (string, error) {
+	resp, err := my.APIFromMytoken(
+		*mytoken, issuer, restrictions, capabilities, subtokenCapabilities,
+		rotation, responseType, name,
+	)
+	if err != nil {
+		return "", err
+	}
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return resp.Mytoken, nil
+}
+
+// APIFromTransferCode exchanges the transferCode into the linked mytoken
+func (my MytokenEndpoint) APIFromTransferCode(transferCode string) (api.MytokenResponse, error) {
 	req := api.ExchangeTransferCodeRequest{
 		GrantType:    api.GrantTypeTransferCode,
 		TransferCode: transferCode,
 	}
-	return my.GetMytoken(req)
+	return my.APIFromRequest(req)
 }
 
-type PollingCallbacks struct {
-	Init     func(string) error
-	Callback func(int64, int)
-	End      func()
+// FromTransferCode exchanges the transferCode into the linked mytoken
+func (my MytokenEndpoint) FromTransferCode(transferCode string) (string, error) {
+	resp, err := my.APIFromTransferCode(transferCode)
+	return resp.Mytoken, err
 }
 
-func (my *MytokenProvider) GetMytokenByAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string, callbacks PollingCallbacks) (string, error) {
-	authRes, err := my.InitAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, responseType, name)
+// APIFromAuthorizationFlow is a rather high level function that obtains a new mytoken using the authorization
+// code flow. This function starts the flow with the passed parameters and performs the polling for the mytoken.
+// The passed PollingCallbacks are called throughout the flow.
+func (my MytokenEndpoint) APIFromAuthorizationFlow(
+	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
+) (api.MytokenResponse, error) {
+	authRes, err := my.APIInitAuthorizationFlow(
+		issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name,
+	)
 	if err != nil {
-		return "", err
+		return api.MytokenResponse{}, err
 	}
 	if err = callbacks.Init(authRes.AuthorizationURL); err != nil {
-		return "", err
+		return api.MytokenResponse{}, err
 	}
-	tok, err := my.Poll(authRes.PollingInfo, callbacks.Callback)
-	if err == nil {
-		callbacks.End()
+	resp, err := my.APIPoll(authRes.PollingInfo, callbacks.Callback)
+	if err != nil {
+		return api.MytokenResponse{}, err
 	}
-	return tok, err
+	callbacks.End()
+	return *resp, nil
 }
 
-func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities, responseType, name string) (*api.AuthCodeFlowResponse, error) {
+// FromAuthorizationFlow is a rather high level function that obtains a new mytoken using the authorization
+// code flow. This function starts the flow with the passed parameters and performs the polling for the mytoken.
+// The passed PollingCallbacks are called throughout the flow.
+func (my MytokenEndpoint) FromAuthorizationFlow(
+	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
+) (string, error) {
+	resp, err := my.APIFromAuthorizationFlow(
+		issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name, callbacks,
+	)
+	return resp.Mytoken, err
+}
+
+// APIInitAuthorizationFlow starts the authorization code flow to obtain a mytoken with the passed parameters; it
+// returns the api.AuthCodeFlowResponse
+func (my MytokenEndpoint) APIInitAuthorizationFlow(
+	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	rotation *api.Rotation, responseType, name string,
+) (resp api.AuthCodeFlowResponse, err error) {
 	req := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
 			GeneralMytokenRequest: api.GeneralMytokenRequest{
@@ -85,75 +150,73 @@ func (my *MytokenProvider) InitAuthorizationFlow(issuer string, restrictions api
 				Restrictions:         restrictions,
 				Capabilities:         capabilities,
 				SubtokenCapabilities: subtokenCapabilities,
+				Rotation:             rotation,
 				Name:                 name,
 				ResponseType:         responseType,
 			},
-			OIDCFlow:             api.OIDCFlowAuthorizationCode,
+			OIDCFlow: api.OIDCFlowAuthorizationCode,
 		},
 		RedirectType: "native",
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetResult(&api.AuthCodeFlowResponse{}).SetError(&api.Error{}).Post(my.MytokenEndpoint)
+	err = my.DoHTTPRequest("POST", req, &resp)
+	return
+}
+
+// APIPoll performs the polling for the final mytoken in the authorization code flow using the passed
+// api.PollingInfo.
+// The callback function takes the polling interval and the number of iteration as parameters; it is called for each
+// polling attempt where the final mytoken could not yet be obtained (but no error occurred); it is usually used to
+// print progress output.
+// At the end the api.MytokenResponse is returned.
+func (my MytokenEndpoint) APIPoll(res api.PollingInfo, callback func(int64, int)) (*api.MytokenResponse, error) {
+	var resp api.MytokenResponse
+	set, err := poll(res, callback, my, &resp)
 	if err != nil {
-		return nil, newMytokenErrorFromError("error while sending http request", err)
+		return nil, err
 	}
-	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
-			return nil, &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
+	if !set {
+		return nil, nil
 	}
-	authRes, ok := resp.Result().(*api.AuthCodeFlowResponse)
-	if !ok {
-		return nil, &MytokenError{
-			err: unexpectedResponse,
-		}
-	}
-	return authRes, nil
+	return &resp, nil
 }
 
-func (my *MytokenProvider) Poll(res api.PollingInfo, callback func(int64, int)) (string, error) {
-	expires := time.Now().Add(time.Duration(res.PollingCodeExpiresIn) * time.Second)
-	interval := res.PollingInterval
-	if interval == 0 {
-		interval = 5
+// Poll performs the polling for the final mytoken in the authorization code flow using the passed
+// api.PollingInfo.
+// The callback function takes the polling interval and the number of iteration as parameters; it is called for each
+// polling attempt where the final mytoken could not yet be obtained (but no error occurred); it is usually used to
+// print progress output.
+// At the end the mytoken is returned.
+func (my MytokenEndpoint) Poll(res api.PollingInfo, callback func(int64, int)) (string, error) {
+	resp, err := my.APIPoll(res, callback)
+	if err != nil {
+		return "", err
 	}
-	tick := time.NewTicker(time.Duration(interval) * time.Second)
-	defer tick.Stop()
-	i := 0
-	for t := range tick.C {
-		if t.After(expires) {
-			break
-		}
-		tok, set, err := my.PollOnce(res.PollingCode)
-		if err != nil {
-			return "", err
-		}
-		if set {
-			return tok, nil
-		}
-		callback(res.PollingInterval, i)
-		i++
-	}
-	return "", fmt.Errorf("polling code expired")
+	return resp.Mytoken, nil
 }
 
-func (my *MytokenProvider) PollOnce(pollingCode string) (string, bool, error) {
-	req := api.PollingCodeRequest{
-		GrantType:   api.GrantTypePollingCode,
-		PollingCode: pollingCode,
+// APIPollOnce sends a single polling request with the passed pollingCode; it returns the api.
+// MytokenResponse if obtained, or an error if an error occurred.
+func (my MytokenEndpoint) APIPollOnce(pollingCode string) (*api.MytokenResponse, error) {
+	var resp api.MytokenResponse
+	set, err := pollOnce(pollingCode, my, &resp)
+	if err != nil {
+		return nil, err
 	}
+	if !set {
+		return nil, nil
+	}
+	return &resp, nil
+}
 
-	tok, err := my.GetMytoken(req)
-	if err == nil {
-		return tok, true, nil
+// PollOnce sends a single polling request with the passed pollingCode; it returns the mytoken if obtained,
+// a bool indicating if the mytoken was obtained, or an error if an error occurred.
+func (my MytokenEndpoint) PollOnce(pollingCode string) (string, bool, error) {
+	resp, err := my.APIPollOnce(pollingCode)
+	if err != nil {
+		return "", false, err
 	}
-	var myErr *MytokenError
-	if errors.As(err, &myErr) {
-		if myErr.err == api.ErrorStrAuthorizationPending {
-			err = nil
-		}
+	if resp == nil {
+		return "", false, nil
 	}
-	return tok, false, err
+	return resp.Mytoken, true, nil
 }

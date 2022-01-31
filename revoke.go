@@ -2,26 +2,31 @@ package mytokenlib
 
 import (
 	"github.com/oidc-mytoken/api/v0"
-	"github.com/oidc-mytoken/server/shared/httpClient"
 )
 
-func (my *MytokenProvider) Revoke(mytoken, oidcIssuer string, recursive bool) error {
+// RevocationEndpoint is type representing a mytoken server's Revocation Endpoint and the actions that can be
+// performed there.
+type RevocationEndpoint struct {
+	endpoint string
+}
+
+// DoHTTPRequest performs an http request to the revocation endpoint
+func (r RevocationEndpoint) DoHTTPRequest(method string, req, resp interface{}) error {
+	return doHTTPRequest(method, r.endpoint, req, resp)
+}
+
+func newRevocationEndpoint(endpoint string) *RevocationEndpoint {
+	return &RevocationEndpoint{
+		endpoint: endpoint,
+	}
+}
+
+// Revoke revokes the passed mytoken; if recursive is true also all subtokens (and their subtokens...) are revoked.
+func (r RevocationEndpoint) Revoke(mytoken, oidcIssuer string, recursive bool) error {
 	req := api.RevocationRequest{
 		Token:      mytoken,
 		Recursive:  recursive,
 		OIDCIssuer: oidcIssuer,
 	}
-	resp, err := httpClient.Do().R().SetBody(req).SetError(&api.Error{}).Post(my.RevocationEndpoint)
-	if err != nil {
-		return newMytokenErrorFromError("error while sending http request", err)
-	}
-	if e := resp.Error(); e != nil {
-		if errRes := e.(*api.Error); errRes != nil && errRes.Error != "" {
-			return &MytokenError{
-				err:          errRes.Error,
-				errorDetails: errRes.ErrorDescription,
-			}
-		}
-	}
-	return nil
+	return r.DoHTTPRequest("POST", req, nil)
 }
