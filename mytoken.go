@@ -71,8 +71,10 @@ func (my MytokenEndpoint) FromMytoken(
 	mytoken *string, issuer string, restrictions api.Restrictions, capabilities,
 	subtokenCapabilities api.Capabilities, rotation *api.Rotation, responseType, name string,
 ) (string, error) {
-	resp, err := my.APIFromMytoken(*mytoken, issuer, restrictions, capabilities, subtokenCapabilities,
-		rotation, responseType, name)
+	resp, err := my.APIFromMytoken(
+		*mytoken, issuer, restrictions, capabilities, subtokenCapabilities,
+		rotation, responseType, name,
+	)
 	if err != nil {
 		return "", err
 	}
@@ -128,7 +130,9 @@ func (my MytokenEndpoint) FromAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
 	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
 ) (string, error) {
-	resp, err := my.APIFromAuthorizationFlow(issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name, callbacks)
+	resp, err := my.APIFromAuthorizationFlow(
+		issuer, restrictions, capabilities, subtokenCapabilities, rotation, responseType, name, callbacks,
+	)
 	return resp.Mytoken, err
 }
 

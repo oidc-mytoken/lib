@@ -21,8 +21,10 @@ func doHTTPRequest(method, url string, reqBody interface{}, responseData interfa
 	return doHTTPRequestWithAuth(method, url, reqBody, responseData, "")
 }
 
-func doHTTPRequestWithAuth(method, url string, reqBody interface{}, responseData interface{},
-	bearerAuth string) error {
+func doHTTPRequestWithAuth(
+	method, url string, reqBody interface{}, responseData interface{},
+	bearerAuth string,
+) error {
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(reqBody); err != nil {
 		return newMytokenErrorFromError(errEncodingRequest, err)

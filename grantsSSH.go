@@ -27,7 +27,9 @@ func (s SSHGrantEndpoint) DoHTTPRequest(method string, req interface{}, resp int
 }
 
 // DoHTTPRequestWithAuth performs an http request to the ssh grant endpoint
-func (s SSHGrantEndpoint) DoHTTPRequestWithAuth(method string, req interface{}, resp interface{}, mytoken string) error {
+func (s SSHGrantEndpoint) DoHTTPRequestWithAuth(
+	method string, req interface{}, resp interface{}, mytoken string,
+) error {
 	return doHTTPRequestWithAuth(method, s.endpoint, req, resp, mytoken)
 }
 
@@ -86,7 +88,8 @@ func (s SSHGrantEndpoint) Remove(mytoken *string, keyFP, publicKey string) error
 // If the used mytoken changes (due to token rotation), the new mytoken is returned in the non-nil *api.MytokenResponse
 func (s SSHGrantEndpoint) APIAdd(
 	mytoken, sshKey, name string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
-	callbacks PollingCallbacks) (response api.SSHKeyAddFinalResponse, tokenUpdate *api.MytokenResponse, err error) {
+	callbacks PollingCallbacks,
+) (response api.SSHKeyAddFinalResponse, tokenUpdate *api.MytokenResponse, err error) {
 	initRes, err := s.APIInitAddSSHKey(mytoken, sshKey, name, restrictions, capabilities, subtokenCapabilities)
 	tokenUpdate = initRes.TokenUpdate
 	if err != nil {
@@ -113,8 +116,10 @@ func (s SSHGrantEndpoint) Add(
 	mytoken *string, sshKey, name string, restrictions api.Restrictions, capabilities,
 	subtokenCapabilities api.Capabilities, callbacks PollingCallbacks,
 ) (api.SSHKeyAddFinalResponse, error) {
-	resp, tokenUpdate, err := s.APIAdd(*mytoken, sshKey, name, restrictions, capabilities, subtokenCapabilities,
-		callbacks)
+	resp, tokenUpdate, err := s.APIAdd(
+		*mytoken, sshKey, name, restrictions, capabilities, subtokenCapabilities,
+		callbacks,
+	)
 	if tokenUpdate != nil {
 		*mytoken = tokenUpdate.Mytoken
 	}
