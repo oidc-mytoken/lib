@@ -61,9 +61,9 @@ func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error)
 // APISubtokens returns a api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
 // recursively)
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoTreeResponse
-func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoTreeResponse, err error) {
+func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoSubtokensResponse, err error) {
 	req := api.TokenInfoRequest{
-		Action:  api.TokeninfoActionSubtokenTree,
+		Action:  api.TokeninfoActionSubtokens,
 		Mytoken: mytoken,
 	}
 	err = info.DoHTTPRequest("POST", req, &resp)
