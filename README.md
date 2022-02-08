@@ -9,7 +9,7 @@
 
 # mytokenlib
 
-`mytokenlib` is a go library for communicating with amytoken server.
+`mytokenlib` is a go library for communicating with a mytoken server.
 `mytoken` is a central web service with the goal to easily obtain OpenID Connect access tokens across devices.
 
 A mytoken command line client can be found
