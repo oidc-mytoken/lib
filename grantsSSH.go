@@ -95,7 +95,7 @@ func (s SSHGrantEndpoint) APIAdd(
 	if err != nil {
 		return
 	}
-	if err = callbacks.Init(initRes.AuthorizationURL); err != nil {
+	if err = callbacks.Init(initRes.ConsentURI); err != nil {
 		return
 	}
 	resp, err := s.APIPoll(initRes.PollingInfo, callbacks.Callback)

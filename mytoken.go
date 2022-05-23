@@ -112,7 +112,7 @@ func (my MytokenEndpoint) APIFromAuthorizationFlow(
 	if err != nil {
 		return api.MytokenResponse{}, err
 	}
-	if err = callbacks.Init(authRes.AuthorizationURL); err != nil {
+	if err = callbacks.Init(authRes.ConsentURI); err != nil {
 		return api.MytokenResponse{}, err
 	}
 	resp, err := my.APIPoll(authRes.PollingInfo, callbacks.Callback)
@@ -156,7 +156,7 @@ func (my MytokenEndpoint) APIInitAuthorizationFlow(
 			},
 			OIDCFlow: api.OIDCFlowAuthorizationCode,
 		},
-		RedirectType: "native",
+		ClientType: api.ClientTypeNative,
 	}
 	err = my.DoHTTPRequest("POST", req, &resp)
 	return
