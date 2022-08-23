@@ -58,7 +58,7 @@ func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error)
 	return resp.EventHistory, nil
 }
 
-// APISubtokens returns a api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
+// APISubtokens returns an api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
 // recursively)
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoTreeResponse
 func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoSubtokensResponse, err error) {
@@ -70,7 +70,7 @@ func (info TokeninfoEndpoint) APISubtokens(mytoken string) (resp api.TokeninfoSu
 	return
 }
 
-// Subtokens returns a api.MytokenEntryTree listing metadata about the passed mytoken and its children (
+// Subtokens returns an api.MytokenEntryTree listing metadata about the passed mytoken and its children (
 // recursively)
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (info TokeninfoEndpoint) Subtokens(mytoken *string) (*api.MytokenEntryTree, error) {
@@ -84,7 +84,7 @@ func (info TokeninfoEndpoint) Subtokens(mytoken *string) (*api.MytokenEntryTree,
 	return &resp.Tokens, nil
 }
 
-// APIListMytokens returns a api.TokeninfoListResponse listing metadata about all the user's mytoken and their
+// APIListMytokens returns an api.TokeninfoListResponse listing metadata about all the user's mytoken and their
 // children (recursively)
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoListResponse
 func (info TokeninfoEndpoint) APIListMytokens(mytoken string) (resp api.TokeninfoListResponse, err error) {
