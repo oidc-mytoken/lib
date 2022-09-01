@@ -33,6 +33,9 @@ func doHTTPRequestWithAuth(
 	if err != nil {
 		return newMytokenErrorFromError(errSendingHttpRequest, err)
 	}
+	if userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
 	if reqBody != nil {
 		req.Header.Set("Content-Type", mimetypeJSON)
 	}

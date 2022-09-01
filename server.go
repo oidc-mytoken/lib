@@ -1,9 +1,6 @@
 package mytokenlib
 
 import (
-	"context"
-	"net/http"
-
 	"github.com/oidc-mytoken/api/v0"
 )
 
@@ -22,9 +19,6 @@ type MytokenServer struct {
 type Endpoint interface {
 	DoHTTPRequest(method string, req interface{}, resp interface{}) error
 }
-
-var httpClient = &http.Client{}
-var ctx = context.Background()
 
 // NewMytokenServer creates a new MytokenServer
 func NewMytokenServer(url string) (*MytokenServer, error) {
@@ -51,14 +45,4 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 		err = nil
 	}
 	return server, err
-}
-
-// SetClient sets the http.Client used to make API requests
-func SetClient(client *http.Client) {
-	httpClient = client
-}
-
-// SetContext sets a context.Context used for all API requests
-func SetContext(contxt context.Context) {
-	ctx = contxt
 }
