@@ -83,14 +83,14 @@ func (s SSHGrantEndpoint) Remove(mytoken *string, keyFP, publicKey string) error
 
 // APIAdd is a rather high level function to add a new ssh key; this includes sending the initial request including
 // the public key, starting the necessary authorization code flow. This function starts the flow with the passed
-// parameters and performs the polling for the ssh user name and configuration.
+// parameters and performs the polling for the ssh username and configuration.
 // The passed PollingCallbacks are called throughout the flow.
 // If the used mytoken changes (due to token rotation), the new mytoken is returned in the non-nil *api.MytokenResponse
 func (s SSHGrantEndpoint) APIAdd(
-	mytoken, sshKey, name string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	mytoken, sshKey, name string, restrictions api.Restrictions, capabilities api.Capabilities,
 	callbacks PollingCallbacks,
 ) (response api.SSHKeyAddFinalResponse, tokenUpdate *api.MytokenResponse, err error) {
-	initRes, err := s.APIInitAddSSHKey(mytoken, sshKey, name, restrictions, capabilities, subtokenCapabilities)
+	initRes, err := s.APIInitAddSSHKey(mytoken, sshKey, name, restrictions, capabilities)
 	tokenUpdate = initRes.TokenUpdate
 	if err != nil {
 		return
@@ -109,17 +109,14 @@ func (s SSHGrantEndpoint) APIAdd(
 
 // Add is a rather high level function to add a new ssh key; this includes sending the initial request including
 // the public key, starting the necessary authorization code flow. This function starts the flow with the passed
-// parameters and performs the polling for the ssh user name and configuration.
+// parameters and performs the polling for the ssh username and configuration.
 // The passed PollingCallbacks are called throughout the flow.
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
 func (s SSHGrantEndpoint) Add(
-	mytoken *string, sshKey, name string, restrictions api.Restrictions, capabilities,
-	subtokenCapabilities api.Capabilities, callbacks PollingCallbacks,
+	mytoken *string, sshKey, name string, restrictions api.Restrictions, capabilities api.Capabilities,
+	callbacks PollingCallbacks,
 ) (api.SSHKeyAddFinalResponse, error) {
-	resp, tokenUpdate, err := s.APIAdd(
-		*mytoken, sshKey, name, restrictions, capabilities, subtokenCapabilities,
-		callbacks,
-	)
+	resp, tokenUpdate, err := s.APIAdd(*mytoken, sshKey, name, restrictions, capabilities, callbacks)
 	if tokenUpdate != nil {
 		*mytoken = tokenUpdate.Mytoken
 	}
@@ -128,16 +125,15 @@ func (s SSHGrantEndpoint) Add(
 
 // APIInitAddSSHKey starts the flow to add an ssh key; it returns the api.AuthCodeFlowResponse
 func (s SSHGrantEndpoint) APIInitAddSSHKey(
-	mytoken, sshKey, name string, restrictions api.Restrictions, capabilities, subtokenCapabilities api.Capabilities,
+	mytoken, sshKey, name string, restrictions api.Restrictions, capabilities api.Capabilities,
 ) (resp api.SSHKeyAddResponse, err error) {
 	req := api.SSHKeyAddRequest{
-		Mytoken:              mytoken,
-		SSHKey:               sshKey,
-		Name:                 name,
-		Restrictions:         restrictions,
-		Capabilities:         capabilities,
-		SubtokenCapabilities: subtokenCapabilities,
-		GrantType:            api.GrantTypeMytoken,
+		Mytoken:      mytoken,
+		SSHKey:       sshKey,
+		Name:         name,
+		Restrictions: restrictions,
+		Capabilities: capabilities,
+		GrantType:    api.GrantTypeMytoken,
 	}
 	err = s.DoHTTPRequest("POST", req, &resp)
 	return
