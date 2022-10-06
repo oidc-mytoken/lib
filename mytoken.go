@@ -99,11 +99,28 @@ func (my MytokenEndpoint) FromTransferCode(transferCode string) (string, error) 
 // The passed PollingCallbacks are called throughout the flow.
 func (my MytokenEndpoint) APIFromAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities api.Capabilities,
-	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
+	rotation *api.Rotation, responseType, name, applicationName string, callbacks PollingCallbacks,
 ) (api.MytokenResponse, error) {
-	authRes, err := my.APIInitAuthorizationFlow(
-		issuer, restrictions, capabilities, rotation, responseType, name,
+	return my.APIFromAuthorizationFlowReq(
+		api.GeneralMytokenRequest{
+			Issuer:          issuer,
+			Restrictions:    restrictions,
+			Capabilities:    capabilities,
+			Name:            name,
+			ResponseType:    responseType,
+			Rotation:        rotation,
+			ApplicationName: applicationName,
+		}, callbacks,
 	)
+}
+
+// APIFromAuthorizationFlowReq is a rather high level function that obtains a new mytoken using the authorization
+// code flow. This function starts the flow with the passed request and performs the polling for the mytoken.
+// The passed PollingCallbacks are called throughout the flow.
+func (my MytokenEndpoint) APIFromAuthorizationFlowReq(
+	req api.GeneralMytokenRequest, callbacks PollingCallbacks,
+) (api.MytokenResponse, error) {
+	authRes, err := my.APIInitAuthorizationFlow(req)
 	if err != nil {
 		return api.MytokenResponse{}, err
 	}
@@ -123,36 +140,28 @@ func (my MytokenEndpoint) APIFromAuthorizationFlow(
 // The passed PollingCallbacks are called throughout the flow.
 func (my MytokenEndpoint) FromAuthorizationFlow(
 	issuer string, restrictions api.Restrictions, capabilities api.Capabilities,
-	rotation *api.Rotation, responseType, name string, callbacks PollingCallbacks,
+	rotation *api.Rotation, responseType, name, applicationName string, callbacks PollingCallbacks,
 ) (string, error) {
 	resp, err := my.APIFromAuthorizationFlow(
-		issuer, restrictions, capabilities, rotation, responseType, name, callbacks,
+		issuer, restrictions, capabilities, rotation, responseType, name, applicationName, callbacks,
 	)
 	return resp.Mytoken, err
 }
 
 // APIInitAuthorizationFlow starts the authorization code flow to obtain a mytoken with the passed parameters; it
 // returns the api.AuthCodeFlowResponse
-func (my MytokenEndpoint) APIInitAuthorizationFlow(
-	issuer string, restrictions api.Restrictions, capabilities api.Capabilities,
-	rotation *api.Rotation, responseType, name string,
-) (resp api.AuthCodeFlowResponse, err error) {
-	req := api.AuthCodeFlowRequest{
+func (my MytokenEndpoint) APIInitAuthorizationFlow(req api.GeneralMytokenRequest) (
+	resp api.AuthCodeFlowResponse, err error,
+) {
+	req.GrantType = api.GrantTypeOIDCFlow
+	flowReq := api.AuthCodeFlowRequest{
 		OIDCFlowRequest: api.OIDCFlowRequest{
-			GeneralMytokenRequest: api.GeneralMytokenRequest{
-				Issuer:       issuer,
-				GrantType:    api.GrantTypeOIDCFlow,
-				Restrictions: restrictions,
-				Capabilities: capabilities,
-				Rotation:     rotation,
-				Name:         name,
-				ResponseType: responseType,
-			},
-			OIDCFlow: api.OIDCFlowAuthorizationCode,
+			GeneralMytokenRequest: req,
+			OIDCFlow:              api.OIDCFlowAuthorizationCode,
 		},
 		ClientType: api.ClientTypeNative,
 	}
-	err = my.DoHTTPRequest("POST", req, &resp)
+	err = my.DoHTTPRequest("POST", flowReq, &resp)
 	return
 }
 
