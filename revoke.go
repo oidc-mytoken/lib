@@ -31,14 +31,14 @@ func (r RevocationEndpoint) Revoke(mytoken, oidcIssuer string, recursive bool) e
 	return r.DoHTTPRequest("POST", req, nil)
 }
 
-// RevokeID revokes the mytoken with the passed revocation id; using the passed mytoken as authorization; if
+// RevokeID revokes the mytoken with the passed mom id; using the passed mytoken as authorization; if
 // recursive is true also all subtokens (and their subtokens...) are revoked.
-func (r RevocationEndpoint) RevokeID(revocationID, mytoken, oidcIssuer string, recursive bool) error {
+func (r RevocationEndpoint) RevokeID(momID, mytoken, oidcIssuer string, recursive bool) error {
 	req := api.RevocationRequest{
-		RevocationID: revocationID,
-		Token:        mytoken,
-		Recursive:    recursive,
-		OIDCIssuer:   oidcIssuer,
+		MOMID:      momID,
+		Token:      mytoken,
+		Recursive:  recursive,
+		OIDCIssuer: oidcIssuer,
 	}
 	return r.DoHTTPRequest("POST", req, nil)
 }

@@ -34,12 +34,19 @@ func (info TokeninfoEndpoint) Introspect(mytoken string) (*api.TokeninfoIntrospe
 	return &resp, nil
 }
 
-// APIHistory obtains the event history for the passed mytoken.
+// APIHistory obtains the event history for the passed mytoken or mom id.
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoHistoryResponse
-func (info TokeninfoEndpoint) APIHistory(mytoken string) (resp api.TokeninfoHistoryResponse, err error) {
+func (info TokeninfoEndpoint) APIHistory(mytoken string, momID ...string) (
+	resp api.TokeninfoHistoryResponse, err error,
+) {
+	var mom string
+	if len(momID) > 0 {
+		mom = momID[0]
+	}
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionEventHistory,
 		Mytoken: mytoken,
+		MOMID:   mom,
 	}
 	err = info.DoHTTPRequest("POST", req, &resp)
 	return
@@ -47,7 +54,7 @@ func (info TokeninfoEndpoint) APIHistory(mytoken string) (resp api.TokeninfoHist
 
 // History obtains the event history for the passed mytoken.
 // If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
-func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error) {
+func (info TokeninfoEndpoint) History(mytoken *string) ([]api.EventEntry, error) {
 	resp, err := info.APIHistory(*mytoken)
 	if err != nil {
 		return nil, err
@@ -55,7 +62,21 @@ func (info TokeninfoEndpoint) History(mytoken *string) (api.EventHistory, error)
 	if resp.TokenUpdate != nil {
 		*mytoken = resp.TokenUpdate.Mytoken
 	}
-	return resp.EventHistory, nil
+	return resp.EventHistory.Events, nil
+}
+
+// HistoryForOtherMytoken obtains the event history for mytoken with the passed mom id and uses the passed mytoken as
+// authorization.
+// If the used mytoken changes (due to token rotation), the passed variable is updated accordingly.
+func (info TokeninfoEndpoint) HistoryForOtherMytoken(mytoken *string, momID string) (*api.EventHistory, error) {
+	resp, err := info.APIHistory(*mytoken, momID)
+	if err != nil {
+		return nil, err
+	}
+	if resp.TokenUpdate != nil {
+		*mytoken = resp.TokenUpdate.Mytoken
+	}
+	return &resp.EventHistory, nil
 }
 
 // APISubtokens returns an api.TokeninfoTreeResponse listing metadata about the passed mytoken and its children (
