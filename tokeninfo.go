@@ -34,19 +34,15 @@ func (info TokeninfoEndpoint) Introspect(mytoken string) (*api.TokeninfoIntrospe
 	return &resp, nil
 }
 
-// APIHistory obtains the event history for the passed mytoken or mom id.
+// APIHistory obtains the event history for the passed mytoken or mom ids.
 // If the used mytoken changes (due to token rotation), the new mytoken is included in the api.TokeninfoHistoryResponse
-func (info TokeninfoEndpoint) APIHistory(mytoken string, momID ...string) (
+func (info TokeninfoEndpoint) APIHistory(mytoken string, momIDs ...string) (
 	resp api.TokeninfoHistoryResponse, err error,
 ) {
-	var mom string
-	if len(momID) > 0 {
-		mom = momID[0]
-	}
 	req := api.TokenInfoRequest{
 		Action:  api.TokeninfoActionEventHistory,
 		Mytoken: mytoken,
-		MOMID:   mom,
+		MOMIDs:  momIDs,
 	}
 	err = info.DoHTTPRequest("POST", req, &resp)
 	return
