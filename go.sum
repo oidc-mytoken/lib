@@ -5,6 +5,10 @@ github.com/oidc-mytoken/api v0.11.1 h1:znpLzfXruM627lH0bjxoJEMRv2fCWptXmlqFRUjgw
 github.com/oidc-mytoken/api v0.11.1/go.mod h1:bd7obYvztiIQW1PoRVBTOg8/clWlauNGwcZEu5mRbwg=
 github.com/oidc-mytoken/api v0.11.2-0.20240426092102-fa4d583a79ad h1:jFJqhdX7BqiL4y9yURp48roCVv3p8n18c1J188T6Jz8=
 github.com/oidc-mytoken/api v0.11.2-0.20240426092102-fa4d583a79ad/go.mod h1:4QwDXesKKEzbTmH2vENYCVcmdb5/gbDPg3DOm9HQLdg=
+github.com/oidc-mytoken/api v0.11.2-0.20260407104632-89693cc5e9a0 h1:SLk5gxn6i6T7h6lHq+qf/8dmF4nXoY+C/N+q614UL4M=
+github.com/oidc-mytoken/api v0.11.2-0.20260407104632-89693cc5e9a0/go.mod h1:4QwDXesKKEzbTmH2vENYCVcmdb5/gbDPg3DOm9HQLdg=
+github.com/oidc-mytoken/api v0.12.0 h1:PPK+0MNPHgJ0CcdF5DBhV+df2IrffhHG0nU7GrIh9hA=
+github.com/oidc-mytoken/api v0.12.0/go.mod h1:4QwDXesKKEzbTmH2vENYCVcmdb5/gbDPg3DOm9HQLdg=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
