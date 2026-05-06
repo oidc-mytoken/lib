@@ -223,3 +223,29 @@ func (my MytokenEndpoint) PollOnce(pollingCode string) (string, bool, error) {
 	}
 	return resp.Mytoken, true, nil
 }
+
+// Tags is a type representing the Mytoken Tags sub-endpoint
+type MytokenTagsEndpoint struct {
+	endpoint string
+}
+
+func newMytokenTagsEndpoint(endpoint string) *MytokenTagsEndpoint {
+	return &MytokenTagsEndpoint{endpoint: endpoint}
+}
+
+// APIAdd adds a tag to a mytoken
+func (t MytokenTagsEndpoint) APIAdd(mytoken api.AddTagToMytokenRequest) (resp api.OnlyTokenUpdateResponse, err error) {
+	err = doHTTPRequest("POST", t.endpoint, mytoken, &resp)
+	return
+}
+
+// APIRemove removes a tag from a mytoken
+func (t MytokenTagsEndpoint) APIRemove(mytoken api.RemoveTagFromMytokenRequest) (resp api.OnlyTokenUpdateResponse, err error) {
+	err = doHTTPRequest("DELETE", t.endpoint, mytoken, &resp)
+	return
+}
+
+// Tags returns the tags sub-endpoint for the mytoken endpoint
+func (my MytokenEndpoint) Tags() *MytokenTagsEndpoint {
+	return newMytokenTagsEndpoint(my.endpoint + "/tags")
+}

@@ -11,6 +11,8 @@ type UserSettingsEndpoint struct {
 	metadata    api.SettingsMetaData
 	metadataSet bool
 	Grants      *GrantsEndpoint
+	Email       *EmailSettingsEndpoint
+	Tags        *TagsSettingsEndpoint
 }
 
 func newUserSettingsEndpoint(endpoint string) (*UserSettingsEndpoint, error) {
@@ -21,6 +23,12 @@ func newUserSettingsEndpoint(endpoint string) (*UserSettingsEndpoint, error) {
 		return nil, err
 	}
 	s.Grants = newGrantsEndpoint(s.metadata.GrantTypeEndpoint)
+	if s.metadata.EmailEndpoint != "" {
+		s.Email = newEmailSettingsEndpoint(s.metadata.EmailEndpoint)
+	}
+	if s.metadata.TagsEndpoint != "" {
+		s.Tags = newTagsSettingsEndpoint(s.metadata.TagsEndpoint)
+	}
 	return s, nil
 }
 

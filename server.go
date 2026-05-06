@@ -6,13 +6,14 @@ import (
 
 // MytokenServer is a type describing a mytoken server instance
 type MytokenServer struct {
-	ServerMetadata api.MytokenConfiguration
-	AccessToken    *AccessTokenEndpoint
-	Mytoken        *MytokenEndpoint
-	Revocation     *RevocationEndpoint
-	Tokeninfo      *TokeninfoEndpoint
-	Transfer       *TransferEndpoint
-	UserSettings   *UserSettingsEndpoint
+	ServerMetadata       api.MytokenConfiguration
+	AccessToken          *AccessTokenEndpoint
+	Mytoken              *MytokenEndpoint
+	Revocation           *RevocationEndpoint
+	Tokeninfo            *TokeninfoEndpoint
+	Transfer             *TransferEndpoint
+	UserSettings         *UserSettingsEndpoint
+	ProfilesAndTemplates *ProfilesAndTemplatesEndpoint
 }
 
 // Endpoint is an interface for mytoken endpoints
@@ -43,6 +44,9 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 	server.UserSettings, err = newUserSettingsEndpoint(respData.UserSettingsEndpoint)
 	if err != nil && err.Error() == "not_found" {
 		err = nil
+	}
+	if respData.ProfilesEndpoint != "" {
+		server.ProfilesAndTemplates = newProfilesAndTemplatesEndpoint(respData.ProfilesEndpoint)
 	}
 	return server, err
 }

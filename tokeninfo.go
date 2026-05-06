@@ -126,3 +126,17 @@ func (info TokeninfoEndpoint) ListMytokens(mytoken *string) ([]api.MytokenEntryT
 	}
 	return resp.Tokens, nil
 }
+
+// APINotifications returns notifications and calendars for the passed mytoken or mom ids.
+// If the used mytoken changes (due to token rotation), the new mytoken is included in the response
+func (info TokeninfoEndpoint) APINotifications(mytoken string, momIDs []string) (
+	resp api.NotificationsCombinedResponse, err error,
+) {
+	req := api.TokenInfoRequest{
+		Action:  api.TokeninfoActionNotifications,
+		Mytoken: mytoken,
+		MOMIDs:  momIDs,
+	}
+	err = info.DoHTTPRequest("POST", req, &resp)
+	return
+}
