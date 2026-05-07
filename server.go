@@ -13,6 +13,8 @@ type MytokenServer struct {
 	Tokeninfo            *TokeninfoEndpoint
 	Transfer             *TransferEndpoint
 	UserSettings         *UserSettingsEndpoint
+	Notifications        *NotificationsEndpoint
+	Calendars            *CalendarsEndpoint
 	ProfilesAndTemplates *ProfilesAndTemplatesEndpoint
 }
 
@@ -44,6 +46,10 @@ func NewMytokenServer(url string) (*MytokenServer, error) {
 	server.UserSettings, err = newUserSettingsEndpoint(respData.UserSettingsEndpoint)
 	if err != nil && err.Error() == "not_found" {
 		err = nil
+	}
+	if respData.NotificationsEndpoint != "" {
+		server.Notifications = newNotificationsEndpoint(respData.NotificationsEndpoint)
+		server.Calendars = newCalendarsEndpoint(respData.NotificationsEndpoint + "/calendars")
 	}
 	if respData.ProfilesEndpoint != "" {
 		server.ProfilesAndTemplates = newProfilesAndTemplatesEndpoint(respData.ProfilesEndpoint)
