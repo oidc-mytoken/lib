@@ -9,8 +9,11 @@ var ctx = context.Background()
 var httpClient = &http.Client{}
 var userAgent = "mytokenlib"
 
+// contextKey is a custom type to avoid collisions with context keys
+type contextKey string
+
 // ContextKeyUserAgent is used to set a useragent string in the context
-const ContextKeyUserAgent = "mytokenlib-user-agent"
+const ContextKeyUserAgent contextKey = "mytokenlib-user-agent"
 
 // SetClient sets the http.Client used to make API requests
 func SetClient(client *http.Client) {
